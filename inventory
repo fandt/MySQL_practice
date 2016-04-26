@@ -1,0 +1,59 @@
+from Tkinter import *
+import csv
+import fileinput
+import os
+from datetime import datetime
+import sys
+
+class ClickInvoke:
+  def __init__(self, master):
+    self.b1 = Button(root, 
+                         text="DONE", fg="red",
+                         command=root.quit)
+    self.b1.pack(side=LEFT)
+    inventorylist = "C:/Users/Rebecca/Desktop/Overland/Ordering Guide old.csv"
+    brands = csv.reader(open(inventorylist))
+    cdate = str(format(datetime.today(),"%Y-%m-%d"))
+    file = "C:/Users/Rebecca/Desktop/Overland/Balance_Report/"+cdate+".csv"
+    alphab=[]
+    for brand in brands:
+        alpha = brand[0][0]
+        if alpha not in alphab:
+            alphab.append(alpha)
+    alphab=alphab[0:2]+sorted(alphab[2:])
+    for value in alphab:
+        self.b1 = Button(text=value,command=lambda arg=value:self.get_bottles(arg))
+        self.b1.pack(side=LEFT)
+    
+      
+    
+  def write_slogan(self,letter):
+    print "Tkinter is easy to use!" +str(letter)
+    for i in range(0,len(bottles)):
+      print len(bottles)
+      type(bottles)
+      sub.destroy()
+
+#
+  def get_bottles(self,letter):
+      inventorylist= "C:/Users/Rebecca/Desktop/Overland/Ordering Guide old.csv"
+      brands = csv.reader(open(inventorylist))
+      global bottles #this is global so write_slogan can use
+      bottles=[]
+      for brand in brands:
+          alpha = brand[0][0]
+          if alpha == letter:
+              bottles.append(brand)
+      global sub
+      sub=Toplevel()
+      sub.title("Go ahead")
+      for bottle in bottles:
+          msg=Message(sub)
+          msg.pack()
+          button=Button(sub,text=bottle, command=lambda arg=bottle:self.write_slogan(arg))
+          button.pack()
+
+
+root = Tk()
+app = ClickInvoke(root)
+root.mainloop()
