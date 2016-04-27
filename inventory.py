@@ -10,6 +10,9 @@ from datetime import datetime
 
 class ClickInvoke:
   def __init__(self, master):
+    width=root.winfo_screenwidth()
+    height=root.winfo_screenheight()
+    root.geometry(str(width)+"x"+str(height/4))
     self.b1 = Button(root, 
                          text="DONE", fg="red",
                          command=root.quit)
@@ -27,6 +30,8 @@ class ClickInvoke:
     for value in alphab:
         self.b1 = Button(text=value,command=lambda arg=value:self.get_bottles(arg))
         self.b1.pack(side=LEFT)
+        self.b1.config(height=height/8, width=width/(8*len(alphab)))
+        print len(alphab)
     
       
     
@@ -54,7 +59,11 @@ class ClickInvoke:
     c = conn.cursor()
     test=c.execute("select * from brands")
     cdate = str(format(datetime.today(),"%Y-%m-%d"))
-    c.execute("insert into inventory(bottle, count, date, order) values(%s,%s,%s,1)",(letter,entry,cdate))
+    lettero = "'"+letter[0]+"'"
+    c.execute("insert into inventory(bottlei, counti, datei, orderi) values(%s,%s,%s,1)",(lettero,entry,cdate))
+    print lettero +", "+entry+", "+cdate
+    conn.commit()
+    conn.close()
 
 
   def get_bottles(self,letter):
