@@ -1,9 +1,12 @@
 from Tkinter import *
+import os
+import sqlite3
+import MySQLdb
+from MySQLdb.constants import FIELD_TYPE
 import csv
 import fileinput
 import os
 from datetime import datetime
-import sys
 
 class ClickInvoke:
   def __init__(self, master):
@@ -28,17 +31,35 @@ class ClickInvoke:
       
     
   def write_slogan(self,letter):
-    print "Tkinter is easy to use!" +str(letter)
-    for i in range(0,len(bottles)):
-      print len(bottles)
-      type(bottles)
-      sub.destroy()
+    print "This is easy to use!" +str(letter)
+    sub.destroy()
+    global subw
+    subw=Toplevel()
+    subw.title("Go ahead")
+    msg=Message(subw,text=letter)
+    msg.pack()
+    button=Button(subw,text="ok", width=10,command=lambda :self.outtie(entry.get(),letter))
+    button.pack()
+    entry=Entry(subw)
+    entry.pack()
+    Label(subw,text="count:").pack()
 
-#
+
+  def outtie(self,entry,letter):
+    print entry
+    subw.destroy()
+    print letter
+    conn = MySQLdb.connect(user = 'root',host="127.0.0.1",db = 'bottlesareus',
+                       port = 3306)
+    c = conn.cursor()
+    test=c.execute("select * from brands")
+    cdate = str(format(datetime.today(),"%Y-%m-%d"))
+    c.execute("insert into inventory(bottle, count, date, order) values(%s,%s,%s,1)",(letter,entry,cdate))
+
+
   def get_bottles(self,letter):
       inventorylist= "C:/Users/Rebecca/Desktop/Overland/Ordering Guide old.csv"
       brands = csv.reader(open(inventorylist))
-      global bottles #this is global so write_slogan can use
       bottles=[]
       for brand in brands:
           alpha = brand[0][0]
