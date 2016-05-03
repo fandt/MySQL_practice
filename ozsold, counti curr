@@ -1,5 +1,9 @@
-SELECT s_item,SUM(f_ticketitem_real_qty)* 1.5 AS ozsold, counti 
-FROM itemsales, inventory
-WHERE s_item = bottlei AND datei="2016-05-02"# s_revenue_class  != 'Food' 
+SELECT s_item,SUM(f_ticketitem_real_qty)* 1.5 AS ozsold, diffcounti.diff 
+FROM itemsales, 
+(SELECT inv0.bottlei, inv0.counti-inv1.counti AS diff FROM inventory AS inv0
+JOIN inventory AS inv1 
+ON inv0.bottlei=inv1.bottlei AND inv1.datei='2016-04-25'
+WHERE inv0.datei = '2016-05-02' ) AS diffcounti
+WHERE s_item = bottlei  
 GROUP BY s_item
 ORDER BY s_item
