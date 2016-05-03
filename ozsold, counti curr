@@ -1,4 +1,4 @@
-SELECT s_item,SUM(f_ticketitem_real_qty)* 1.5 AS ozsold, diffcounti.diff 
+SELECT s_item,SUM(f_ticketitem_real_qty)* 1.5 AS ozsold, diffcounti.diff*25.3601 #servings*1.5 for oz, counti*25.3601 for oz from 750 ml
 FROM itemsales, 
 (SELECT inv0.bottlei, inv0.counti-inv1.counti AS diff FROM inventory AS inv0
 JOIN inventory AS inv1 
