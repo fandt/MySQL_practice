@@ -1,0 +1,5 @@
+SELECT s_item,SUM(f_ticketitem_real_qty)* 1.5 AS ozsold, counti 
+FROM itemsales, inventory
+WHERE s_item = bottlei AND datei="2016-05-02"# s_revenue_class  != 'Food' 
+GROUP BY s_item
+ORDER BY s_item
