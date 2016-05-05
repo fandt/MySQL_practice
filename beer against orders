@@ -1,0 +1,13 @@
+SELECT s_item,SUM(f_ticketitem_real_qty) countsold, diffcounti.diff diff, diff-ordero
+FROM itemsales LEFT JOIN
+
+(SELECT inv0.bottlei, inv0.counti-inv1.counti AS diff FROM inventory AS inv0
+LEFT JOIN inventory AS inv1 
+ON inv0.bottlei=inv1.bottlei AND inv1.datei='2016-04-18'
+WHERE inv0.datei = '2016-04-25' ) AS diffcounti ON s_item=diffcounti.bottlei
+
+LEFT JOIN orderb ON s_item=bottleo
+
+WHERE s_item = bottlei  AND dt_when >'2016-04-18' AND s_revenue_class = "beer" 
+GROUP BY s_item
+ORDER BY s_item
