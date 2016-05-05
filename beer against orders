@@ -1,4 +1,4 @@
-SELECT s_item,SUM(f_ticketitem_real_qty) countsold, diffcounti.diff diff, diff-ordero
+SELECT s_item,SUM(f_ticketitem_real_qty) countsold, diffcounti.diff diff, diff-IFNULL(ordero,0)
 FROM itemsales LEFT JOIN
 
 (SELECT inv0.bottlei, inv0.counti-inv1.counti AS diff FROM inventory AS inv0
