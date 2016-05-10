@@ -10,8 +10,8 @@ from datetime import datetime
 conn = MySQLdb.connect(user = 'root',host="127.0.0.1",db = 'bottlesareus',port = 3306)
 c = conn.cursor()
 test=c.execute("select * from brands")
-
-itemsales = "C:/Users/Rebecca/Desktop/Overland/Item Sales Alphabetical 5.2.16.csv"
+test =0
+itemsales = "C:/Users/Rebecca/Desktop/Overland/Item Sales Alphabetical 4.1-5.9.16.csv"
 sales = csv.reader(open(itemsales))
 for sale in sales:
     try:
@@ -20,12 +20,14 @@ for sale in sales:
         f_ticketitem_real_qtys=sale[9]
         s_revenue_classs=sale[10]
         s_item_groups=sale[11]
-        dt = datetime.strptime(sale[12],"%m/%d/%Y %I:%M:%S %p")
+        dt = datetime.strptime(sale[12],"%m/%d/%y %H:%M")
         dt_whens = str(format(dt,"%Y-%m-%d %H:%M:%S"))
         c.execute("insert into ItemSales (s_item,c_ticketitem_net_price,f_ticketitem_real_qty,s_revenue_class,s_item_group,dt_when)values (%s,%s,%s,%s,%s,%s)",(s_items,c_ticketitem_net_prices,f_ticketitem_real_qtys,s_revenue_classs,s_item_groups,dt_whens))
         conn.commit()
     except:
-        pass
-        
+        print 'error'+str(sale[12])
+        test=test+1
+        print test
+        continue
         
 conn.close()
