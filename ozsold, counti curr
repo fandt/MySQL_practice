@@ -1,9 +1,22 @@
-SELECT s_item,SUM(f_ticketitem_real_qty)* 1.5 AS ozsold, diffcounti.diff*25.3601 #servings*1.5 for oz, counti*25.3601 for oz from 750 ml
-FROM itemsales, 
+SELECT s_item,SUM(f_ticketitem_real_qty)* 1.5 AS ozsold, CASE 
+WHEN currorder.ordero IS NULL 
+THEN diffcounti.diff
+ELSE diffcounti.diff-currorder.ordero      #servings*1.5 for oz, counti*25.3601 for oz from 750 ml
+END AS diff
+FROM itemsales
+ JOIN
 (SELECT inv0.bottlei, inv0.counti-inv1.counti AS diff FROM inventory AS inv0
-JOIN inventory AS inv1 
-ON inv0.bottlei=inv1.bottlei AND inv1.datei='2016-04-25'
-WHERE inv0.datei = '2016-05-02' ) AS diffcounti
-WHERE s_item = bottlei  
+JOIN inventory AS inv1 #start date
+ON inv0.bottlei=inv1.bottlei AND inv1.datei='2016-04-18'
+WHERE inv0.datei = '2016-04-25' ) AS diffcounti
+
+ON s_item = bottlei  AND dt_when >'2016-04-18' AND s_revenue_class = "liquor" 
+
+ LEFT JOIN
+(SELECT orderb.ordero, bottleo FROM orderb
+WHERE orderb.dateo BETWEEN '2016-04-18' AND '2016-04-25' ) AS currorder
+ON s_item=bottleo
+
 GROUP BY s_item
 ORDER BY s_item
+
