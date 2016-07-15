@@ -1,0 +1,40 @@
+import os
+import sqlite3
+import MySQLdb
+from MySQLdb.constants import FIELD_TYPE
+import csv
+import fileinput
+import os
+from datetime import datetime
+from os import listdir
+from os.path import isfile, join
+
+conn = MySQLdb.connect(user = 'root',host="127.0.0.1",db = 'vacation',port = 3306)
+c = conn.cursor()
+test=c.execute("select * from balance")
+print test
+
+mypath = "C:/Users/rmorganstern/Documents/reports/VacFloat"
+onlyfiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
+#print onlyfiles
+for lf in onlyfiles :
+    extension = os.path.splitext(lf)[1]
+    if extension == ".csv":
+        datev = lf[12:19]
+        pdatev = datetime.strptime(datev,"%m-%d-%y")
+        datevformatted = str(format(pdatev,"%Y-%m-%d"))
+        print datevformatted
+        filename = mypath+"/"+lf
+        print filename
+        reportvals = csv.reader(open(filename))
+        for vals in reportvals:
+            filenumber = vals[0]
+            eename = vals[1]
+            vbal = vals[4]
+            fbal = vals[5]
+            vtaken = vals[7]
+            ftaken = vals[8]
+            c.execute("insert into balance(Name,FileNumber,Vbalance,Fbalance,Vtaken,Ftaken,date)values (%s,%s,%s,%s,%s,%s,%s)",(eename,filenumber,vbal,fbal,vtaken,ftaken,datevformatted))
+
+conn.commit()
+conn.close()
