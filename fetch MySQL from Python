@@ -1,0 +1,19 @@
+import os
+import sqlite3
+import MySQLdb
+from MySQLdb.constants import FIELD_TYPE
+import csv
+import fileinput
+import os
+from datetime import datetime
+
+conn = MySQLdb.connect(user = 'root',host="127.0.0.1",db = 'vacation',
+                       port = 3306)
+c = conn.cursor()
+record = c.execute("SELECT * FROM ucvbalance WHERE filenumber = 890")
+numrows=c.rowcount
+for r in xrange(0,numrows):
+    rec=c.fetchone()
+    print rec
+conn.commit()
+conn.close()
