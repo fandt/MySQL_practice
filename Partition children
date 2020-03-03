@@ -1,0 +1,323 @@
+select distinct
+
+e.SocialSecurityNumber, e.FirstName, e.LastName, e.Gender, e.birthdate, e.XRefCode as EENumber, e.EmployeeId
+
+,ogenroll.OEDate
+
+,'N' as HCTC, 'N' as AEI
+
+, personaddress.Address1, PersonAddress.Address2, PersonAddress.City, PersonAddress.StateCode, Personaddress.postalCode, PersonAddress.CountryCode
+
+, toohc.MedicalPlan, toohc.MedicalCoverage
+
+, toohc.EAP, case when toohc.EAP is null then null else 'EE' end as EAPCoverage
+
+, toohc.DentalPlan, toohc.DentalCoverage
+
+, toohc.VisionPlan, toohc.VisionCoverage
+
+, case when toohc.FSA is null then 'N' else 'Y' end as FSA, toohc.FSA as FSAContrib
+
+, EmployeeDependentBeneficiary.FirstName as SpouseFirst, EmployeeDependentBeneficiary.LastName as SpouseLast, EmployeeDependentBeneficiary.SocialSecurityNumber as SpouseSSN, EmployeeDependentBeneficiary.BirthDate as SpouseDOB
+
+, EmployeeDependentBeneficiary.EffectiveEnd as DepBeneficiaryEnd
+
+, Child1.FirstName as Child1First, Child1.LastName as Child1Last, Child1.SocialSecurityNumber as Child1SSN, Child1.BirthDate as Child1DOB
+
+, Child2.FirstName as Child2First, Child2.LastName as Child2Last, Child2.SocialSecurityNumber as Child2SSN, Child2.BirthDate as Child2DOB
+
+, Child3.FirstName as Child3First, Child3.LastName as Child3Last, Child3.SocialSecurityNumber as Child3SSN, Child3.BirthDate as Child3DOB
+
+, Child4.FirstName as Child4First, Child4.LastName as Child4Last, Child4.SocialSecurityNumber as Child4SSN, Child4.BirthDate as Child4DOB
+
+, Child5.FirstName as Child5First, Child5.LastName as Child5Last, Child5.SocialSecurityNumber as Child5SSN, Child5.BirthDate as Child5DOB
+
+, Child6.FirstName as Child6First, Child6.LastName as Child6Last, Child6.SocialSecurityNumber as Child6SSN, Child6.BirthDate as Child6DOB
+
+, Child7.FirstName as Child7First, Child7.LastName as Child7Last, Child7.SocialSecurityNumber as Child7SSN, Child7.BirthDate as Child7DOB
+
+, Child8.FirstName as Child8First, Child8.LastName as Child8Last, Child8.SocialSecurityNumber as Child8SSN, Child8.BirthDate as Child8DOB
+
+, Child9.FirstName as Child9First, Child9.LastName as Child9Last, Child9.SocialSecurityNumber as Child9SSN, Child9.BirthDate as Child9DOB
+
+, cobraevents.EventReason, CobraEvents.QualifiedDate, cobraevents.CobraStatus
+
+, employmentstatus.ShortName as Status
+
+, OrgUnit.ShortName as Division
+
+, LO.LODate as EmployeeEffectiveEnd
+
+, benecobraevents.CobraStatus as BeneDepCobraStatus
+
+, benecobraevents.DepBendEffectiveEnd as BeneDepEffectiveEnd
+
+from employee e
+
+left join
+
+(select BenPlanEmployeeEligibleBenPlanOption.EmployeeId, min(BenPlanEmployeeElectedOption.CoverageStart) as OEDate -- ElectionDate or CoverageStart for Enrollment?
+
+from BenPlanEmployeeEligibleBenPlanOption
+
+join BenPlanEmployeeElectedOption on BenPlanEmployeeElectedOption.BenPlanEmployeeEligibleBenPlanOptionId= BenPlanEmployeeEligibleBenPlanOption.BenPlanEmployeeEligibleBenPlanOptionId
+
+join BenPlanOption on BenPlanEmployeeEligibleBenPlanOption.BenPlanOptionId = BenPlanOption.BenPlanOptionId
+
+where IsDeleted < 1
+
+and BenPlanOption.BenPlanId in (13,14,18,23,25,15,31)
+
+--and employeeid = 6743
+
+group by EmployeeId
+
+) as ogenroll -- original enrollment?
+
+on e.EmployeeId=ogenroll.EmployeeId
+
+left join
+
+(select BenPlanEmployeeEligibleBenPlanOption.EmployeeId, max(BenPlanEmployeeElectedOption.EffectiveEnd) as LODate -- ElectionDate or CoverageStart for Enrollment?
+
+from BenPlanEmployeeEligibleBenPlanOption
+
+join BenPlanEmployeeElectedOption on BenPlanEmployeeElectedOption.BenPlanEmployeeEligibleBenPlanOptionId= BenPlanEmployeeEligibleBenPlanOption.BenPlanEmployeeEligibleBenPlanOptionId
+
+join BenPlanOption on BenPlanEmployeeEligibleBenPlanOption.BenPlanOptionId = BenPlanOption.BenPlanOptionId
+
+where IsDeleted < 1
+
+and BenPlanOption.BenPlanId in (13,14,18,23,25,15, 31)
+
+--and employeeid = 6592
+
+group by EmployeeId
+
+　
+
+) as lo -- latest end enrollment?
+
+on e.EmployeeId=lo.EmployeeId
+
+join personaddress on personaddress.PersonId = e.employeeid and personaddress.effectiveend is null and ContactInformationTypeId = 1
+
+left join (
+
+select BenPlanEmployeeEligibleBenPlanOption.employeeId
+
+, min(case when BenPlan.BenPlanId in (13,14,18,23,25) then BenPlan.ShortName end) as MedicalPlan --- for MedicalPlan
+
+, min(case when BenPlan.BenPlanId in (13,14,18,23,25) then BenPlanOption.ShortName end) as MedicalCoverage --for MedicalCoverage
+
+, min(case when BenPlan.BenPlanId in (31) then BenPlanOption.ShortName end) as EAP
+
+, min(case when BenPlan.BenPlanId in (15, 17) then BenPlan.ShortName end) as DentalPlan
+
+, min(case when BenPlan.BenPlanId in (15, 17) then BenPlanOption.ShortName end) as DentalCoverage -- 7172, 7269 eeid UHC
+
+, min(case when BenPlan.BenPlanId in (12,16) then BenPlan.ShortName end) as VisionPlan
+
+, min(case when BenPlan.BenPlanId in (12,16) then BenPlanOption.ShortName end) as VisionCoverage
+
+, sum(case when BenPlan.BenPlanId in (22) then BenPlanEmployeeElectedOption.ContributionAmount end) as FSA
+
+, max(LastTerm) as LastTerm
+
+from BenPlanEmployeeEligibleBenPlanOption
+
+join BenPlanEmployeeElectedOption on BenPlanEmployeeElectedOption.BenPlanEmployeeEligibleBenPlanOptionId= BenPlanEmployeeEligibleBenPlanOption.BenPlanEmployeeEligibleBenPlanOptionId
+
+join BenPlanOption on BenPlanEmployeeEligibleBenPlanOption.BenPlanOptionId = BenPlanOption.BenPlanOptionId
+
+join BenPlan on benplanoption.BenPlanId=benplan.BenPlanId
+
+join EmployeeEmploymentStatus on BenPlanEmployeeEligibleBenPlanOption.EmployeeId=EmployeeEmploymentStatus.EmployeeId
+
+left join (
+
+select EmployeeId, Max(EffectiveEnd) as LastTerm
+
+from EmployeeEmploymentStatus
+
+group by employeeId) LT
+
+on LT.EmployeeId=EmployeeEmploymentStatus.EmployeeId -- getting most recent end of benefits (or null end of benefits? ?)
+
+where IsDeleted < 1
+
+and (BenPlanEmployeeElectedOption.EffectiveEnd >= LT.LastTerm or BenPlanEmployeeElectedOption.EffectiveEnd is null)
+
+group by BenPlanEmployeeEligibleBenPlanOption.EmployeeId
+
+) as toohc -- gets benefits people had at their last status change (term)
+
+on toohc.employeeid=e.EmployeeId
+
+-- the following is spouse and then children (should use pivot?)
+
+left join EmployeeDependentBeneficiary on e.employeeid = EmployeeDependentBeneficiary.RelatedToId and EmployeeDependentBeneficiary.EffectiveEnd is null and EmployeeDependentBeneficiary.RelationshipTypeId = 16
+
+left join (select row_Number() over(partition by RelatedtoId order by Birthdate) as childrow, LastName, FirstName, SocialSecurityNumber, BirthDate, RelatedtoId
+
+from EmployeeDependentBeneficiary
+
+where RelationshipTypeId = 14
+
+group by RelatedToId, LastName, FirstName, SocialSecurityNumber, BirthDate) as Child1
+
+on Child1.RelatedToId=e.employeeId and Child1.childrow = 1
+
+left join (select row_Number() over(partition by RelatedtoId order by Birthdate) as childrow, LastName, FirstName, SocialSecurityNumber, BirthDate, RelatedtoId
+
+from EmployeeDependentBeneficiary
+
+where RelationshipTypeId = 14
+
+group by RelatedToId, LastName, FirstName, SocialSecurityNumber, BirthDate) as Child2
+
+on Child2.RelatedToId=e.employeeId and Child2.Childrow = 2
+
+left join (select row_Number() over(partition by RelatedtoId order by Birthdate) as childrow, LastName, FirstName, SocialSecurityNumber, BirthDate, RelatedtoId
+
+from EmployeeDependentBeneficiary
+
+where RelationshipTypeId = 14
+
+group by RelatedToId, LastName, FirstName, SocialSecurityNumber, BirthDate) as Child3
+
+on Child3.RelatedToId=e.employeeId and Child3.Childrow = 3
+
+left join (select row_Number() over(partition by RelatedtoId order by Birthdate) as childrow, LastName, FirstName, SocialSecurityNumber, BirthDate, RelatedtoId
+
+from EmployeeDependentBeneficiary
+
+where RelationshipTypeId = 14
+
+group by RelatedToId, LastName, FirstName, SocialSecurityNumber, BirthDate) as Child4
+
+on Child4.RelatedToId=e.employeeId and Child4.Childrow = 4
+
+left join (select row_Number() over(partition by RelatedtoId order by Birthdate) as childrow, LastName, FirstName, SocialSecurityNumber, BirthDate, RelatedtoId
+
+from EmployeeDependentBeneficiary
+
+where RelationshipTypeId = 14
+
+group by RelatedToId, LastName, FirstName, SocialSecurityNumber, BirthDate) as Child5
+
+on Child5.RelatedToId=e.employeeId and Child5.Childrow = 5
+
+left join (select row_Number() over(partition by RelatedtoId order by Birthdate) as childrow, LastName, FirstName, SocialSecurityNumber, BirthDate, RelatedtoId
+
+from EmployeeDependentBeneficiary
+
+where RelationshipTypeId = 14
+
+group by RelatedToId, LastName, FirstName, SocialSecurityNumber, BirthDate) as Child6
+
+on Child6.RelatedToId=e.employeeId and Child6.Childrow = 6
+
+left join (select row_Number() over(partition by RelatedtoId order by Birthdate) as childrow, LastName, FirstName, SocialSecurityNumber, BirthDate, RelatedtoId
+
+from EmployeeDependentBeneficiary
+
+where RelationshipTypeId = 14
+
+group by RelatedToId, LastName, FirstName, SocialSecurityNumber, BirthDate) as Child7
+
+on Child7.RelatedToId=e.employeeId and Child7.Childrow = 7
+
+left join (select row_Number() over(partition by RelatedtoId order by Birthdate) as childrow, LastName, FirstName, SocialSecurityNumber, BirthDate, RelatedtoId
+
+from EmployeeDependentBeneficiary
+
+where RelationshipTypeId = 14
+
+group by RelatedToId, LastName, FirstName, SocialSecurityNumber, BirthDate) as Child8
+
+on Child8.RelatedToId=e.employeeId and Child8.Childrow = 8
+
+left join (select row_Number() over(partition by RelatedtoId order by Birthdate) as childrow, LastName, FirstName, SocialSecurityNumber, BirthDate, RelatedtoId
+
+from EmployeeDependentBeneficiary
+
+where RelationshipTypeId = 14
+
+group by RelatedToId, LastName, FirstName, SocialSecurityNumber, BirthDate) as Child9
+
+on Child9.RelatedToId=e.employeeId and Child9.Childrow = 9
+
+left join (
+
+select EmployeeID, isnull(BenCOBRAEventReason.ShortName,'-') as EventReason, QualifiedDate, BenCobraEventId , case BenCOBRAEvent.status when 0 then 'Pending' when 1 then 'sent' when 3 then 'Auto Assign' when 4 then 'Pending for Enrollment' end as CobraStatus
+
+from BenPlanEmployeeElectedOption
+
+left join BenCOBRAEvent on BenCOBRAEvent.BenPlanEmployeeElectedOptionid= BenPlanEmployeeElectedOption.BenPlanEmployeeElectedOptionid
+
+left join BenPlanEmployeeEligibleBenPlanOption on BenPlanEmployeeEligibleBenPlanOption.BenPlanEmployeeEligibleBenPlanOptionid=BenPlanEmployeeElectedOption.BenPlanEmployeeEligibleBenPlanOptionid
+
+left join BenCOBRAEventReason on BenCOBRAEventReason.BenCobraEventReasonId=BenCOBRAEvent.BenCobraEventReasonId
+
+where BenCobraEventId is not null
+
+--COBRA Status codes
+
+--0 = Pending
+
+--1 = Sent
+
+--3 = Auto Assign
+
+--4 = Pending for Enrollment
+
+) as cobraevents on cobraevents.EmployeeId=e.EmployeeId
+
+left join EmployeeWorkAssignment on E.EmployeeId=EmployeeWorkAssignment.EmployeeId
+
+and (EmployeeWorkAssignment.EffectiveEnd >= toohc.LastTerm
+
+or EmployeeWorkAssignment.EffectiveEnd is null)
+
+left join OrgUnit on EmployeeWorkAssignment.OrgUnitId=OrgUnit.OrgUnitId
+
+left join EmployeeEmploymentStatus on EmployeeEmploymentStatus.EmployeeId=e.EmployeeId and EmployeeEmploymentStatus.EffectiveEnd is null
+
+join employmentstatus on EmployeeEmploymentStatus.EmploymentStatusId=employmentstatus.EmploymentStatusId
+
+left join (
+
+select EmployeeID, isnull(BenCOBRAEventReason.ShortName,'-') as EventReason, QualifiedDate, depbeneelect.EffectiveEnd as DepBendEffectiveEnd, BenCobraEventId , case BenDepEvent.status when 0 then 'Pending' when 1 then 'sent' when 3 then 'Auto Assign' when 4 then 'Pending for Enrollment' end as CobraStatus
+
+from BenPlanEmployeeEligibleBenPlanOption depbene
+
+join BenPlanEmployeeElectedOption depbeneelect on depbeneelect.BenPlanEmployeeEligibleBenPlanOptionId= depbene.BenPlanEmployeeEligibleBenPlanOptionId
+
+left join BenPlanEmployeeDependentElectedOption on depbeneelect.BenPlanEmployeeElectedOptionid=BenPlanEmployeeDependentElectedOption.BenPlanEmployeeElectedOptionid
+
+left join BenCOBRAEvent BenDepEvent on BenDepEvent.BenPlanEmployeeDependentElectedOptionid= BenPlanEmployeeDependentElectedOption.BenPlanEmployeeDependentElectedOptionid
+
+left join BenCOBRAEventReason on BenCOBRAEventReason.BenCobraEventReasonId=BenDepEvent.BenCobraEventReasonId
+
+where BenCobraEventId is not null
+
+--COBRA Status codes
+
+--0 = Pending
+
+--1 = Sent
+
+--3 = Auto Assign
+
+--4 = Pending for Enrollment
+
+) as benecobraevents on benecobraevents.EmployeeId=e.EmployeeId
+
+where
+
+(cobraevents.CobraStatus is not null or benecobraevents.CobraStatus is not null) and
+
+(lo.LODate between '2019-02-16' and getdate() or
+
+benecobraevents.DepBendEffectiveEnd between '2019-02-16' and getdate())
